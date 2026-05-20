@@ -17,6 +17,7 @@ import { StdCheats } from "forge-std/StdCheats.sol";
 import { IERC20, IERC20Metadata } from "core/interfaces/IERC20.sol";
 import { Adapter, TenderizerHarness } from "test/tenderizer/Tenderizer.harness.sol";
 import { AdapterDelegateCall } from "core/adapters/Adapter.sol";
+import { Tenderizer as TenderizerContract } from "core/tenderizer/Tenderizer.sol";
 import { TenderizerEvents } from "core/tenderizer/TenderizerBase.sol";
 import { StaticCallFailed } from "core/utils/StaticCall.sol";
 import { TToken } from "core/tendertoken/TToken.sol";
@@ -296,6 +297,16 @@ contract TenderizerTest is TenderizerSetup, TenderizerEvents {
 
         vm.expectRevert(abi.encodeWithSelector(AdapterDelegateCall.AdapterDelegateCallFailed.selector, ERROR_MESSAGE));
         tenderizer.withdraw(account1, unlockID);
+    }
+
+    function test_Withdraw_RevertIfAdapterReturnsZeroAssets() public {
+        uint256 unlockID = 1;
+        vm.mockCall(unlocks, abi.encodeCall(Unlocks.useUnlock, (account1, unlockID)), "");
+        vm.mockCall(adapter, abi.encodeCall(Adapter.withdraw, (validator, unlockID)), abi.encode(0));
+
+        vm.prank(account1);
+        vm.expectRevert(TenderizerContract.InsufficientAssets.selector);
+        tenderizer.withdraw(account2, unlockID);
     }
 
     function test_Withdraw_RevertIfUseUnlockFails() public {

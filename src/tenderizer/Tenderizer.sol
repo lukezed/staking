@@ -124,6 +124,7 @@ contract Tenderizer is TenderizerImmutableArgs, TenderizerEvents, TToken, Multic
 
         // withdraw assets to send to `receiver`
         amount = _withdraw(validator(), unlockID);
+        if (amount == 0) revert InsufficientAssets();
 
         // transfer assets to `receiver`
         ERC20(asset()).safeTransfer(receiver, amount);
